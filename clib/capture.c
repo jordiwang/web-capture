@@ -11,6 +11,7 @@ typedef struct {
 typedef struct {
     uint32_t width;
     uint32_t height;
+    uint32_t duration;
     uint8_t *data;
 } ImageData;
 
@@ -148,6 +149,7 @@ ImageData *process(AVFormatContext *pFormatCtx, int ms) {
     imageData = (ImageData *)malloc(sizeof(ImageData));
     imageData->width = (uint32_t)pNewCodecCtx->width;
     imageData->height = (uint32_t)pNewCodecCtx->height;
+    imageData->duration = (uint32_t)pFormatCtx->duration;
     imageData->data = getFrameBuffer(pFrameRGB, pNewCodecCtx);
 
     avcodec_close(pCodecCtx);

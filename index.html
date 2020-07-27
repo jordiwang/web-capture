@@ -18,6 +18,8 @@
 
     <div id="js_time"></div>
 
+    <div id="js_duration"></div>
+
     <div id="js_result"></div>
 
     <script>
@@ -45,11 +47,12 @@
         let fileInput = document.querySelector('#js_file');
         let button = document.querySelector('#js_button');
         let timeContainer = document.querySelector('#js_time');
+        let durationContainer = document.querySelector('#js_duration');
         let resultContainer = document.querySelector('#js_result');
 
 
 
-        function drawImage(width, height, imageBuffer) {
+        function drawImage(width, height, duration, imageBuffer) {
             let canvas = document.createElement('canvas');
             let ctx = canvas.getContext('2d');
 
@@ -88,10 +91,11 @@
 
                 let width = Module.HEAPU32[imgDataPtr / 4],
                     height = Module.HEAPU32[imgDataPtr / 4 + 1],
-                    imageBufferPtr = Module.HEAPU32[imgDataPtr / 4 + 2],
+                    duration = Module.HEAPU32[imgDataPtr / 4 + 2],
+                    imageBufferPtr = Module.HEAPU32[imgDataPtr / 4 + 3],
                     imageBuffer = Module.HEAPU8.subarray(imageBufferPtr, imageBufferPtr + width * height * 3);
 
-                callback(width, height, imageBuffer);
+                callback(width, height, duration, imageBuffer);
 
                 Module._free(fileBufferPtr);
                 Module._free(imgDataPtr);
@@ -105,12 +109,13 @@
             let file = fileInput.files[0];
             let startTime = Date.now();
 
-            readFile(file, (width, height, imageBuffer) => {
+            readFile(file, (width, height, duration, imageBuffer) => {
                 resultContainer.innerHTML = '';
-                drawImage(width, height, imageBuffer);
+                drawImage(width, height, duration, imageBuffer);
 
                 let deltaTime = Date.now() - startTime;
 
+                durationContainer.innerHTML = `<p>视频时长：${duration/1000000}s</p>`
                 timeContainer.innerHTML = `<p>累计耗时：${deltaTime}ms</p>`
 
             });
