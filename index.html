@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>demo</title>
+</head>
+
+<body>
+
+
+    <div>
+        <input id="js_file" type="file">
+        <input id="js_timestamp" type="number" value="10">
+        <button id="js_button">提取</button>
+    </div>
+
+    <div id="js_time"></div>
+
+    <div id="js_result"></div>
+
+    <script>
+        Module = {
+            instantiateWasm(info, receiveInstance) {
+                fetch('/wasm/capture.wasm')
+                    .then(response => {
+                        return response.arrayBuffer()
+                    }
+                    ).then(bytes => {
+                        return WebAssembly.instantiate(bytes, info)
+                    }).then(result => {
+                        receiveInstance(result.instance);
+                    })
+            },
+            onRuntimeInitialized() {
+                console.log('===== wasm 初始化完成 =====');
+            }
+        }
+    </script>
+
+    <script src="/wasm/capture.js"></script>
+    <script>
+        let timeStampInput = document.querySelector('#js_timestamp');
+        let fileInput = document.querySelector('#js_file');
+        let button = document.querySelector('#js_button');
+        let timeContainer = document.querySelector('#js_time');
+        let resultContainer = document.querySelector('#js_result');
+
+
+
+        function drawImage(width, height, imageBuffer) {
+            let canvas = document.createElement('canvas');
+            let ctx = canvas.getContext('2d');
+
+            canvas.width = width;
+            canvas.height = height;
+
+            let imageData = ctx.createImageData(width, height);
+            let j = 0;
+            for (let i = 0; i < imageBuffer.length; i++) {
+                if (i && i % 3 == 0) {
+                    imageData.data[j] = 255;
+                    j += 1;
+                }
+
+                imageData.data[j] = imageBuffer[i];
+                j += 1;
+            }
+
+            ctx.putImageData(imageData, 0, 0, 0, 0, width, height);
+
+            resultContainer.appendChild(canvas);
+        }
+
+        function readFile(file, callback) {
+            let fileReader = new FileReader();
+
+            fileReader.onload = evt => {
+                let fileBuffer = new Uint8Array(fileReader.result),
+                    fileBufferPtr = Module._malloc(fileBuffer.length);
+
+                Module.HEAP8.set(fileBuffer, fileBufferPtr);
+
+
+
+                let imgDataPtr = Module._capture(fileBufferPtr, fileBuffer.length, timeStampInput.value * 1000);
+
+                let width = Module.HEAPU32[imgDataPtr / 4],
+                    height = Module.HEAPU32[imgDataPtr / 4 + 1],
+                    imageBufferPtr = Module.HEAPU32[imgDataPtr / 4 + 2],
+                    imageBuffer = Module.HEAPU8.subarray(imageBufferPtr, imageBufferPtr + width * height * 3);
+
+                callback(width, height, imageBuffer);
+
+                Module._free(fileBufferPtr);
+                Module._free(imgDataPtr);
+                Module._free(imageBufferPtr);
+            };
+
+            fileReader.readAsArrayBuffer(file);
+        }
+
+        button.addEventListener('click', () => {
+            let file = fileInput.files[0];
+            let startTime = Date.now();
+
+            readFile(file, (width, height, imageBuffer) => {
+                resultContainer.innerHTML = '';
+                drawImage(width, height, imageBuffer);
+
+                let deltaTime = Date.now() - startTime;
+
+                timeContainer.innerHTML = `<p>累计耗时：${deltaTime}ms</p>`
+
+            });
+        });
+    </script>
+
+</body>
+
+</html>
