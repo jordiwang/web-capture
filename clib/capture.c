@@ -247,17 +247,17 @@ VideoInfo *getInfo(uint8_t *buff, const int buffLength) {
         return NULL;
     }
 
-    AVCodecParameters *pCodecPar = pFormatCtx->streams[videoStream]->codecpar;
+    AVCodecContext *pCodecCtx = pFormatCtx->streams[videoStream]->codec;
 
     VideoInfo *videoInfo = NULL;
 
     videoInfo = (VideoInfo *)malloc(sizeof(VideoInfo));
-    videoInfo->width = (uint32_t)pCodecPar->width;
-    videoInfo->height = (uint32_t)pCodecPar->height;
+    videoInfo->width = (uint32_t)pCodecCtx->width;
+    videoInfo->height = (uint32_t)pCodecCtx->height;
     videoInfo->duration = (uint32_t)pFormatCtx->duration;
 
     avformat_close_input(&pFormatCtx);
-    avcodec_parameters_free(&pCodecPar);
+    avcodec_close(pCodecCtx);
     av_free(avioCtx->buffer);
     av_free(avioCtx);
     av_free(avioCtxBuffer);
