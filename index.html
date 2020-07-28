@@ -14,11 +14,13 @@
         <input id="js_file" type="file">
         <input id="js_timestamp" type="number" value="10">
         <button id="js_button">提取</button>
+        <button id="js_info_button">视频信息</button>
     </div>
+
+    <div id="js_info"></div>
 
     <div id="js_time"></div>
 
-    <div id="js_duration"></div>
 
     <div id="js_result"></div>
 
@@ -45,14 +47,11 @@
     <script>
         let timeStampInput = document.querySelector('#js_timestamp');
         let fileInput = document.querySelector('#js_file');
-        let button = document.querySelector('#js_button');
         let timeContainer = document.querySelector('#js_time');
         let durationContainer = document.querySelector('#js_duration');
         let resultContainer = document.querySelector('#js_result');
 
-
-
-        function drawImage(width, height, duration, imageBuffer) {
+        function drawImage(width, height, imageBuffer) {
             let canvas = document.createElement('canvas');
             let ctx = canvas.getContext('2d');
 
@@ -85,17 +84,14 @@
 
                 Module.HEAP8.set(fileBuffer, fileBufferPtr);
 
-
-
                 let imgDataPtr = Module._capture(fileBufferPtr, fileBuffer.length, timeStampInput.value * 1000);
 
                 let width = Module.HEAPU32[imgDataPtr / 4],
                     height = Module.HEAPU32[imgDataPtr / 4 + 1],
-                    duration = Module.HEAPU32[imgDataPtr / 4 + 2],
-                    imageBufferPtr = Module.HEAPU32[imgDataPtr / 4 + 3],
+                    imageBufferPtr = Module.HEAPU32[imgDataPtr / 4 + 2],
                     imageBuffer = Module.HEAPU8.subarray(imageBufferPtr, imageBufferPtr + width * height * 3);
 
-                callback(width, height, duration, imageBuffer);
+                callback(width, height, imageBuffer);
 
                 Module._free(fileBufferPtr);
                 Module._free(imgDataPtr);
@@ -105,21 +101,48 @@
             fileReader.readAsArrayBuffer(file);
         }
 
+        let button = document.querySelector('#js_button');
         button.addEventListener('click', () => {
             let file = fileInput.files[0];
             let startTime = Date.now();
 
-            readFile(file, (width, height, duration, imageBuffer) => {
+            readFile(file, (width, height, imageBuffer) => {
                 resultContainer.innerHTML = '';
-                drawImage(width, height, duration, imageBuffer);
+                drawImage(width, height, imageBuffer);
 
                 let deltaTime = Date.now() - startTime;
 
-                durationContainer.innerHTML = `<p>视频时长：${duration/1000000}s</p>`
-                timeContainer.innerHTML = `<p>累计耗时：${deltaTime}ms</p>`
-
+                timeContainer.innerHTML = `<p>累计耗时：${deltaTime}ms</p>`;
             });
         });
+
+        let infoButton = document.querySelector('#js_info_button');
+        let infoContainer = document.querySelector('#js_info');
+        infoButton.addEventListener('click', () => {
+            let file = fileInput.files[0];
+            let fileReader = new FileReader();
+
+            fileReader.onload = evt => {
+                let fileBuffer = new Uint8Array(fileReader.result),
+                    fileBufferPtr = Module._malloc(fileBuffer.length);
+
+                Module.HEAP8.set(fileBuffer, fileBufferPtr);
+
+                let videoInfo = Module._getInfo(fileBufferPtr, fileBuffer.length);
+
+                let width = Module.HEAPU32[videoInfo / 4],
+                    height = Module.HEAPU32[videoInfo / 4 + 1],
+                    duration = Module.HEAPU32[videoInfo / 4 + 2];
+
+                infoContainer.innerHTML = `<p>宽度：${width}<br>高度：${height}<br>时长：${duration / 1000000}s</p>`;
+
+                Module._free(fileBufferPtr);
+                Module._free(videoInfo);
+            };
+
+            fileReader.readAsArrayBuffer(file);
+        });
+
     </script>
 
 </body>

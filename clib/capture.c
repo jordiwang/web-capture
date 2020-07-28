@@ -11,9 +11,14 @@ typedef struct {
 typedef struct {
     uint32_t width;
     uint32_t height;
-    uint32_t duration;
     uint8_t *data;
 } ImageData;
+
+typedef struct {
+    uint32_t width;
+    uint32_t height;
+    uint32_t duration;
+} VideoInfo;
 
 BufferData bufferData;
 
@@ -30,7 +35,6 @@ AVFrame *initAVFrame(AVCodecContext *pCodecCtx, uint8_t **frameBuffer) {
 
     int numBytes;
     numBytes = av_image_get_buffer_size(AV_PIX_FMT_RGB24, pCodecCtx->width, pCodecCtx->height, 1);
-    
     *frameBuffer = (uint8_t *)av_malloc(numBytes * sizeof(uint8_t));
 
     av_image_fill_arrays(pFrameRGB->data, pFrameRGB->linesize, *frameBuffer, AV_PIX_FMT_RGB24, pCodecCtx->width, pCodecCtx->height, 1);
@@ -92,8 +96,9 @@ uint8_t *getFrameBuffer(AVFrame *pFrame, AVCodecContext *pCodecCtx) {
     return buffer;
 }
 
-ImageData *imageData = NULL;
 ImageData *process(AVFormatContext *pFormatCtx, int ms) {
+    ImageData *imageData = NULL;
+
     if (avformat_find_stream_info(pFormatCtx, NULL) < 0) {
         fprintf(stderr, "avformat_find_stream_info failed\n");
         return NULL;
@@ -149,7 +154,6 @@ ImageData *process(AVFormatContext *pFormatCtx, int ms) {
     imageData = (ImageData *)malloc(sizeof(ImageData));
     imageData->width = (uint32_t)pNewCodecCtx->width;
     imageData->height = (uint32_t)pNewCodecCtx->height;
-    imageData->duration = (uint32_t)pFormatCtx->duration;
     imageData->data = getFrameBuffer(pFrameRGB, pNewCodecCtx);
 
     avcodec_close(pCodecCtx);
@@ -202,4 +206,61 @@ ImageData *capture(uint8_t *buff, const int buffLength, int ms) {
     av_free(avioCtxBuffer);
 
     return result;
+}
+
+VideoInfo *getInfo(uint8_t *buff, const int buffLength) {
+    unsigned char *avio_ctx_buffer = NULL;
+    size_t avio_ctx_buffer_size = buffLength;
+
+    bufferData.ptr = buff;
+    bufferData.size = buffLength;
+
+    AVFormatContext *pFormatCtx = avformat_alloc_context();
+
+    uint8_t *avioCtxBuffer = (uint8_t *)av_malloc(avio_ctx_buffer_size);
+
+    AVIOContext *avioCtx = avio_alloc_context(avioCtxBuffer, avio_ctx_buffer_size, 0, NULL, readPacket, NULL, NULL);
+
+    pFormatCtx->pb = avioCtx;
+    pFormatCtx->flags = AVFMT_FLAG_CUSTOM_IO;
+
+    if (avformat_open_input(&pFormatCtx, "", NULL, NULL) < 0) {
+        fprintf(stderr, "avformat_open_input failed\n");
+        return NULL;
+    }
+
+ 
+    if (avformat_find_stream_info(pFormatCtx, NULL) < 0) {
+        fprintf(stderr, "avformat_find_stream_info failed\n");
+        return NULL;
+    }
+
+    int videoStream = -1;
+    for (int i = 0; i < pFormatCtx->nb_streams; i++) {
+        if (pFormatCtx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
+            videoStream = i;
+            break;
+        }
+    }
+
+    if (videoStream == -1) {
+        return NULL;
+    }
+
+    AVCodecParameters *pCodecPar = pFormatCtx->streams[videoStream]->codecpar;
+
+    VideoInfo *videoInfo = NULL;
+
+    videoInfo = (VideoInfo *)malloc(sizeof(VideoInfo));
+    videoInfo->width = (uint32_t)pCodecPar->width;
+    videoInfo->height = (uint32_t)pCodecPar->height;
+    videoInfo->duration = (uint32_t)pFormatCtx->duration;
+
+    avformat_close_input(&pFormatCtx);
+    avcodec_parameters_free(&pCodecPar);
+    av_free(avioCtx->buffer);
+    av_free(avioCtx);
+    av_free(avioCtxBuffer);
+
+    return videoInfo;
 }
