@@ -12,7 +12,7 @@
 
     <div>
         <input id="js_file" type="file">
-        <input id="js_timestamp" type="number" value="10">
+        <input id="js_timestamp" type="number" value="0.5">
         <button id="js_button">提取</button>
         <button id="js_info_button">视频信息</button>
     </div>
@@ -80,7 +80,7 @@
 
             fileReader.onload = evt => {
                 let fileBuffer = new Uint8Array(fileReader.result),
-                    fileBufferPtr = Module._malloc(fileBuffer.length);
+                    fileBufferPtr = Module._malloc(fileBuffer.length * 1.2);
 
                 Module.HEAP8.set(fileBuffer, fileBufferPtr);
 
