@@ -14,7 +14,6 @@
         <input id="js_file" type="file">
         <input id="js_timestamp" type="number" value="0.5">
         <button id="js_button">提取</button>
-        <button id="js_info_button">视频信息</button>
     </div>
 
     <div id="js_info"></div>
@@ -39,6 +38,10 @@
             },
             onRuntimeInitialized() {
                 console.log('===== wasm 初始化完成 =====');
+            },
+            destroy(obj) {
+                console.log(obj);
+
             }
         }
     </script>
@@ -80,7 +83,8 @@
 
             fileReader.onload = evt => {
                 let fileBuffer = new Uint8Array(fileReader.result),
-                    fileBufferPtr = Module._malloc(fileBuffer.length * 1.2);
+                    fileBufferPtr = Module._malloc(fileBuffer.length * 1.5);
+
 
                 Module.HEAP8.set(fileBuffer, fileBufferPtr);
 
@@ -88,10 +92,11 @@
 
                 let width = Module.HEAPU32[imgDataPtr / 4],
                     height = Module.HEAPU32[imgDataPtr / 4 + 1],
-                    imageBufferPtr = Module.HEAPU32[imgDataPtr / 4 + 2],
+                    duration = Module.HEAPU32[imgDataPtr / 4 + 2],
+                    imageBufferPtr = Module.HEAPU32[imgDataPtr / 4 + 3],
                     imageBuffer = Module.HEAPU8.subarray(imageBufferPtr, imageBufferPtr + width * height * 3);
 
-                callback(width, height, imageBuffer);
+                callback(width, height, duration, imageBuffer);
 
                 Module._free(fileBufferPtr);
                 Module._free(imgDataPtr);
@@ -106,42 +111,17 @@
             let file = fileInput.files[0];
             let startTime = Date.now();
 
-            readFile(file, (width, height, imageBuffer) => {
+            readFile(file, (width, height, duration, imageBuffer) => {
                 resultContainer.innerHTML = '';
                 drawImage(width, height, imageBuffer);
 
                 let deltaTime = Date.now() - startTime;
 
-                timeContainer.innerHTML = `<p>累计耗时：${deltaTime}ms</p>`;
+                timeContainer.innerHTML = `<p>视频时长：${duration / 1000000}s</p><p>累计耗时：${deltaTime}ms</p>`;
             });
         });
 
-        let infoButton = document.querySelector('#js_info_button');
-        let infoContainer = document.querySelector('#js_info');
-        infoButton.addEventListener('click', () => {
-            let file = fileInput.files[0];
-            let fileReader = new FileReader();
 
-            fileReader.onload = evt => {
-                let fileBuffer = new Uint8Array(fileReader.result),
-                    fileBufferPtr = Module._malloc(fileBuffer.length);
-
-                Module.HEAP8.set(fileBuffer, fileBufferPtr);
-
-                let videoInfo = Module._getInfo(fileBufferPtr, fileBuffer.length);
-
-                let width = Module.HEAPU32[videoInfo / 4],
-                    height = Module.HEAPU32[videoInfo / 4 + 1],
-                    duration = Module.HEAPU32[videoInfo / 4 + 2];
-
-                infoContainer.innerHTML = `<p>宽度：${width}<br>高度：${height}<br>时长：${duration / 1000000}s</p>`;
-
-                Module._free(fileBufferPtr);
-                Module._free(videoInfo);
-            };
-
-            fileReader.readAsArrayBuffer(file);
-        });
 
     </script>
 
