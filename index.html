@@ -54,6 +54,9 @@
         let durationContainer = document.querySelector('#js_duration');
         let resultContainer = document.querySelector('#js_result');
 
+        let fileBufferPtr = 0;
+        let cacheFile = null;
+
         function drawImage(width, height, imageBuffer) {
             let canvas = document.createElement('canvas');
             let ctx = canvas.getContext('2d');
@@ -82,28 +85,36 @@
             let fileReader = new FileReader();
 
             fileReader.onload = evt => {
-                let fileBuffer = new Uint8Array(fileReader.result),
-                    fileBufferPtr = Module._malloc(fileBuffer.length * 1.5);
-
-
-                Module.HEAP8.set(fileBuffer, fileBufferPtr);
-
-                let imgDataPtr = Module._capture(fileBufferPtr, fileBuffer.length, timeStampInput.value * 1000);
-
-                let width = Module.HEAPU32[imgDataPtr / 4],
-                    height = Module.HEAPU32[imgDataPtr / 4 + 1],
-                    duration = Module.HEAPU32[imgDataPtr / 4 + 2],
-                    imageBufferPtr = Module.HEAPU32[imgDataPtr / 4 + 3],
-                    imageBuffer = Module.HEAPU8.subarray(imageBufferPtr, imageBufferPtr + width * height * 3);
-
-                callback(width, height, duration, imageBuffer);
-
-                Module._free(fileBufferPtr);
-                Module._free(imgDataPtr);
-                Module._free(imageBufferPtr);
+                let fileBuffer = new Uint8Array(fileReader.result);
+                callback(fileBuffer);
             };
 
             fileReader.readAsArrayBuffer(file);
+        }
+
+        function setFile(fileBuffer) {
+            let filePtr = Module._malloc(fileBuffer.length * 1.5);
+
+            Module.HEAP8.set(fileBuffer, filePtr);
+
+            Module._setFile(filePtr, fileBuffer.length);
+
+            return filePtr;
+        }
+
+        function capture(ms, callback) {
+            let imgDataPtr = Module._capture(ms);
+
+            let width = Module.HEAPU32[imgDataPtr / 4],
+                height = Module.HEAPU32[imgDataPtr / 4 + 1],
+                duration = Module.HEAPU32[imgDataPtr / 4 + 2],
+                imageBufferPtr = Module.HEAPU32[imgDataPtr / 4 + 3],
+                imageBuffer = Module.HEAPU8.subarray(imageBufferPtr, imageBufferPtr + width * height * 3);
+
+            callback(width, height, duration, imageBuffer);
+
+            Module._free(imgDataPtr);
+            Module._free(imageBufferPtr);
         }
 
         let button = document.querySelector('#js_button');
@@ -111,18 +122,35 @@
             let file = fileInput.files[0];
             let startTime = Date.now();
 
-            readFile(file, (width, height, duration, imageBuffer) => {
-                resultContainer.innerHTML = '';
-                drawImage(width, height, imageBuffer);
+            if (file === cacheFile) {
+                capture(timeStampInput.value * 1000, (width, height, duration, imageBuffer) => {
+                    resultContainer.innerHTML = '';
 
-                let deltaTime = Date.now() - startTime;
+                    drawImage(width, height, imageBuffer);
 
-                timeContainer.innerHTML = `<p>视频时长：${duration / 1000000}s</p><p>累计耗时：${deltaTime}ms</p>`;
-            });
+                    let deltaTime = Date.now() - startTime;
+
+                    timeContainer.innerHTML = `<p>视频时长：${duration / 1000000}s</p><p>累计耗时：${deltaTime}ms</p>`;
+                });
+            } else {
+                cacheFile = file;
+
+                Module._free(fileBufferPtr);
+                readFile(file, fileBuffer => {
+                    fileBufferPtr = setFile(fileBuffer);
+
+                    capture(timeStampInput.value * 1000, (width, height, duration, imageBuffer) => {
+                        resultContainer.innerHTML = '';
+
+                        drawImage(width, height, imageBuffer);
+
+                        let deltaTime = Date.now() - startTime;
+
+                        timeContainer.innerHTML = `<p>视频时长：${duration / 1000000}s</p><p>累计耗时：${deltaTime}ms</p>`;
+                    });
+                });
+            }
         });
-
-
-
     </script>
 
 </body>

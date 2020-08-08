@@ -173,14 +173,15 @@ int readPacket(void *opaque, uint8_t *buf, int buf_size) {
     return buf_size;
 }
 
-ImageData *capture(uint8_t *buff, const int buffLength, int ms) {
-    unsigned char *avio_ctx_buffer = NULL;
-    size_t avio_ctx_buffer_size = buffLength;
+AVFormatContext *pFormatCtx = NULL;
 
+int *setFile(uint8_t *buff, const int buffLength) {
     bufferData.ptr = buff;
     bufferData.size = buffLength;
 
-    AVFormatContext *pFormatCtx = avformat_alloc_context();
+    size_t avio_ctx_buffer_size = bufferData.size;
+
+    pFormatCtx = avformat_alloc_context();
 
     uint8_t *avioCtxBuffer = (uint8_t *)av_malloc(avio_ctx_buffer_size);
 
@@ -194,12 +195,16 @@ ImageData *capture(uint8_t *buff, const int buffLength, int ms) {
         return NULL;
     }
 
+    return  bufferData.size;
+}
+
+ImageData *capture(int ms) {
     ImageData *result = process(pFormatCtx, ms);
 
-    avformat_close_input(&pFormatCtx);
-    av_free(avioCtx->buffer);
-    av_free(avioCtx);
-    av_free(avioCtxBuffer);
+    // avformat_close_input(&pFormatCtx);
+    // av_free(avioCtx->buffer);
+    // av_free(avioCtx);
+    // av_free(avioCtxBuffer);
 
     return result;
 }
