@@ -4,155 +4,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>demo</title>
+    <title>Document</title>
 </head>
 
 <body>
 
+    <input id="js_file" type="file">
 
-    <div>
-        <input id="js_file" type="file">
-        <input id="js_timestamp" type="number" value="0.5">
-        <button id="js_button">提取</button>
-    </div>
+    <input id="js_time" type="number" value="1" placeholder="画面时间s">
+
+    <button id="js_button">提取</button>
+
 
     <div id="js_info"></div>
 
-    <div id="js_time"></div>
-
-
     <div id="js_result"></div>
 
+    <script src="./web-capture.js"></script>
+
     <script>
-        Module = {
-            instantiateWasm(info, receiveInstance) {
-                fetch('/wasm/capture.wasm')
-                    .then(response => {
-                        return response.arrayBuffer()
-                    }
-                    ).then(bytes => {
-                        return WebAssembly.instantiate(bytes, info)
-                    }).then(result => {
-                        receiveInstance(result.instance);
-                    })
-            },
-            onRuntimeInitialized() {
+        let webCapture = new WebCapture({
+            onInit() {
                 console.log('===== wasm 初始化完成 =====');
-            },
-            destroy(obj) {
-                console.log(obj);
-
             }
-        }
-    </script>
-
-    <script src="/wasm/capture.js"></script>
-    <script>
-        let timeStampInput = document.querySelector('#js_timestamp');
-        let fileInput = document.querySelector('#js_file');
-        let timeContainer = document.querySelector('#js_time');
-        let durationContainer = document.querySelector('#js_duration');
-        let resultContainer = document.querySelector('#js_result');
-
-        let fileBufferPtr = 0;
-        let cacheFile = null;
-
-        function drawImage(width, height, imageBuffer) {
-            let canvas = document.createElement('canvas');
-            let ctx = canvas.getContext('2d');
-
-            canvas.width = width;
-            canvas.height = height;
-
-            let imageData = ctx.createImageData(width, height);
-            let j = 0;
-            for (let i = 0; i < imageBuffer.length; i++) {
-                if (i && i % 3 == 0) {
-                    imageData.data[j] = 255;
-                    j += 1;
-                }
-
-                imageData.data[j] = imageBuffer[i];
-                j += 1;
-            }
-
-            ctx.putImageData(imageData, 0, 0, 0, 0, width, height);
-
-            resultContainer.appendChild(canvas);
-        }
-
-        function readFile(file, callback) {
-            let fileReader = new FileReader();
-
-            fileReader.onload = evt => {
-                let fileBuffer = new Uint8Array(fileReader.result);
-                callback(fileBuffer);
-            };
-
-            fileReader.readAsArrayBuffer(file);
-        }
-
-        function setFile(fileBuffer) {
-            let filePtr = Module._malloc(fileBuffer.length * 1.5);
-
-            Module.HEAP8.set(fileBuffer, filePtr);
-
-            Module._setFile(filePtr, fileBuffer.length);
-
-            return filePtr;
-        }
-
-        function capture(ms, callback) {
-            let imgDataPtr = Module._capture(ms);
-
-            let width = Module.HEAPU32[imgDataPtr / 4],
-                height = Module.HEAPU32[imgDataPtr / 4 + 1],
-                duration = Module.HEAPU32[imgDataPtr / 4 + 2],
-                imageBufferPtr = Module.HEAPU32[imgDataPtr / 4 + 3],
-                imageBuffer = Module.HEAPU8.subarray(imageBufferPtr, imageBufferPtr + width * height * 3);
-
-            callback(width, height, duration, imageBuffer);
-
-            Module._free(imgDataPtr);
-            Module._free(imageBufferPtr);
-        }
+        });
 
         let button = document.querySelector('#js_button');
+        let resultContainer = document.querySelector('#js_result');
+        let fileInput = document.querySelector('#js_file');
+        let timeInput = document.querySelector('#js_time');
+        let infoContainer = document.querySelector('#js_info');
+
+        let cacheFile = null;
+
         button.addEventListener('click', () => {
             let file = fileInput.files[0];
+
             let startTime = Date.now();
 
             if (file === cacheFile) {
-                capture(timeStampInput.value * 1000, (width, height, duration, imageBuffer) => {
-                    resultContainer.innerHTML = '';
+                let result = webCapture.capture(timeInput.value * 1000);
 
-                    drawImage(width, height, imageBuffer);
+                let deltaTime = Date.now() - startTime;
 
-                    let deltaTime = Date.now() - startTime;
-
-                    timeContainer.innerHTML = `<p>视频时长：${duration / 1000000}s</p><p>累计耗时：${deltaTime}ms</p>`;
-                });
+                resultContainer.innerHTML = `<img src="${result.dataUrl}"/>`;
+                infoContainer.innerHTML = `耗时：${deltaTime}ms<br>宽度：${result.width}<br>高度：${result.height}<br>时长：${result.duration / 1000000}s`;
             } else {
                 cacheFile = file;
 
-                Module._free(fileBufferPtr);
-                readFile(file, fileBuffer => {
-                    fileBufferPtr = setFile(fileBuffer);
+                webCapture.setFile(file, () => {
+                    let result = webCapture.capture(timeInput.value * 1000);
 
-                    capture(timeStampInput.value * 1000, (width, height, duration, imageBuffer) => {
-                        resultContainer.innerHTML = '';
+                    let deltaTime = Date.now() - startTime;
 
-                        drawImage(width, height, imageBuffer);
-
-                        let deltaTime = Date.now() - startTime;
-
-                        timeContainer.innerHTML = `<p>视频时长：${duration / 1000000}s</p><p>累计耗时：${deltaTime}ms</p>`;
-                    });
+                    resultContainer.innerHTML = `<img src="${result.dataUrl}"/>`;
+                    infoContainer.innerHTML = `耗时：${deltaTime}ms<br>宽度：${result.width}<br>高度：${result.height}<br>时长：${result.duration / 1000000}s`;
                 });
             }
         });
     </script>
-
 </body>
 
 </html>
