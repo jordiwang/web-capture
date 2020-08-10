@@ -91,7 +91,49 @@ uint8_t *getFrameBuffer(AVFrame *pFrame, AVCodecContext *pCodecCtx) {
     return buffer;
 }
 
-ImageData *process(AVFormatContext *pFormatCtx, int ms) {
+int readPacket(void *opaque, uint8_t *buf, int buf_size) {
+    buf_size = FFMIN(buf_size, bufferData.size);
+
+    if (!buf_size) {
+        return AVERROR_EOF;
+    }
+
+    memcpy(buf, bufferData.ptr, buf_size);
+
+    bufferData.ptr += buf_size;
+    bufferData.size -= buf_size;
+
+    return buf_size;
+}
+
+AVFormatContext *pFormatCtx = NULL;
+
+int setFile(uint8_t *buff, int buffLength) {
+    avformat_close_input(&pFormatCtx);
+
+    bufferData.ptr = buff;
+    bufferData.size = buffLength;
+
+    size_t avio_ctx_buffer_size = bufferData.size;
+
+    pFormatCtx = avformat_alloc_context();
+
+    uint8_t *avioCtxBuffer = (uint8_t *)av_malloc(avio_ctx_buffer_size);
+
+    AVIOContext *avioCtx = avio_alloc_context(avioCtxBuffer, avio_ctx_buffer_size, 0, NULL, readPacket, NULL, NULL);
+
+    pFormatCtx->pb = avioCtx;
+    pFormatCtx->flags = AVFMT_FLAG_CUSTOM_IO;
+
+    if (avformat_open_input(&pFormatCtx, "", NULL, NULL) < 0) {
+        fprintf(stderr, "avformat_open_input failed\n");
+        return -1;
+    }
+
+    return 0;
+}
+
+ImageData *capture(int ms) {
     ImageData *imageData = NULL;
 
     if (avformat_find_stream_info(pFormatCtx, NULL) < 0) {
@@ -156,55 +198,4 @@ ImageData *process(AVFormatContext *pFormatCtx, int ms) {
     av_free(frameBuffer);
 
     return imageData;
-}
-
-int readPacket(void *opaque, uint8_t *buf, int buf_size) {
-    buf_size = FFMIN(buf_size, bufferData.size);
-
-    if (!buf_size) {
-        return AVERROR_EOF;
-    }
-
-    memcpy(buf, bufferData.ptr, buf_size);
-
-    bufferData.ptr += buf_size;
-    bufferData.size -= buf_size;
-
-    return buf_size;
-}
-
-AVFormatContext *pFormatCtx = NULL;
-
-int *setFile(uint8_t *buff, const int buffLength) {
-    bufferData.ptr = buff;
-    bufferData.size = buffLength;
-
-    size_t avio_ctx_buffer_size = bufferData.size;
-
-    pFormatCtx = avformat_alloc_context();
-
-    uint8_t *avioCtxBuffer = (uint8_t *)av_malloc(avio_ctx_buffer_size);
-
-    AVIOContext *avioCtx = avio_alloc_context(avioCtxBuffer, avio_ctx_buffer_size, 0, NULL, readPacket, NULL, NULL);
-
-    pFormatCtx->pb = avioCtx;
-    pFormatCtx->flags = AVFMT_FLAG_CUSTOM_IO;
-
-    if (avformat_open_input(&pFormatCtx, "", NULL, NULL) < 0) {
-        fprintf(stderr, "avformat_open_input failed\n");
-        return NULL;
-    }
-
-    return  bufferData.size;
-}
-
-ImageData *capture(int ms) {
-    ImageData *result = process(pFormatCtx, ms);
-
-    // avformat_close_input(&pFormatCtx);
-    // av_free(avioCtx->buffer);
-    // av_free(avioCtx);
-    // av_free(avioCtxBuffer);
-
-    return result;
 }

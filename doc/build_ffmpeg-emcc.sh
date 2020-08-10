@@ -39,9 +39,11 @@ emconfigure ./configure \
     --disable-network \
     --disable-everything \
     --enable-demuxer=mov \
+    --enable-demuxer=matroska \
     --enable-decoder=h264 \
     --enable-decoder=hevc \
     --enable-decoder=mpeg4 \
+    --enable-decoder=vp8 \
     --disable-asm \
     --disable-debug \
 
