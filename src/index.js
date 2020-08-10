@@ -87,12 +87,20 @@ class WebCapture {
     }
 
     setFile(file, callback) {
+        this.cacheFile = file;
+
+        if (this.cacheFilePtr) {
+            Module._free(this.cacheFilePtr);
+        }
+
         let fileReader = new FileReader();
 
         fileReader.onload = () => {
             let fileBuffer = new Uint8Array(fileReader.result);
 
             let filePtr = Module._malloc(fileBuffer.length * 1.5);
+
+            this.cacheFilePtr = filePtr;
 
             Module.HEAP8.set(fileBuffer, filePtr);
 
@@ -114,13 +122,7 @@ class WebCapture {
 
             callback(dataUrl, imgInfo);
         } else {
-            Module._free(this.cacheFilePtr);
-
-            this.cacheFile = file;
-
-            this.setFile(file, filePtr => {
-                this.cacheFilePtr = filePtr;
-
+            this.setFile(file, () => {
                 let imgDataPtr = Module._capture(timeStamp);
 
                 let imgInfo = this._getImageInfo(imgDataPtr);
