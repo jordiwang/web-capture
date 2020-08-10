@@ -2,6 +2,9 @@ class WebCapture {
     constructor(option) {
         this.option = option;
 
+        this.cacheFile = null;
+        this.cacheFilePtr = 0;
+
         window.Module = {
             instantiateWasm: (info, receiveInstance) => {
                 fetch('./wasm/capture.wasm')
@@ -40,7 +43,7 @@ class WebCapture {
         document.body.appendChild(node);
     }
 
-    _getImage(width, height, imageBuffer) {
+    _getImageDataUrl(width, height, imageBuffer) {
         let canvas = document.createElement('canvas');
         let ctx = canvas.getContext('2d');
 
@@ -65,15 +68,22 @@ class WebCapture {
         return canvas.toDataURL('image/jpeg');
     }
 
-    readFile(file, callback) {
-        let fileReader = new FileReader();
+    _getImageInfo(imgDataPtr) {
+        let width = Module.HEAPU32[imgDataPtr / 4],
+            height = Module.HEAPU32[imgDataPtr / 4 + 1],
+            duration = Module.HEAPU32[imgDataPtr / 4 + 2],
+            imageBufferPtr = Module.HEAPU32[imgDataPtr / 4 + 3],
+            imageBuffer = Module.HEAPU8.subarray(imageBufferPtr, imageBufferPtr + width * height * 3);
 
-        fileReader.onload = () => {
-            let fileBuffer = new Uint8Array(fileReader.result);
-            callback(fileBuffer);
+        Module._free(imgDataPtr);
+        Module._free(imageBufferPtr);
+
+        return {
+            width,
+            height,
+            duration,
+            imageBuffer
         };
-
-        fileReader.readAsArrayBuffer(file);
     }
 
     setFile(file, callback) {
@@ -94,26 +104,32 @@ class WebCapture {
         fileReader.readAsArrayBuffer(file);
     }
 
-    capture(timeStamp) {
-        let imgDataPtr = Module._capture(timeStamp);
+    capture(file, timeStamp, callback) {
+        if (file === this.cacheFile) {
+            let imgDataPtr = Module._capture(timeStamp);
 
-        let width = Module.HEAPU32[imgDataPtr / 4],
-            height = Module.HEAPU32[imgDataPtr / 4 + 1],
-            duration = Module.HEAPU32[imgDataPtr / 4 + 2],
-            imageBufferPtr = Module.HEAPU32[imgDataPtr / 4 + 3],
-            imageBuffer = Module.HEAPU8.subarray(imageBufferPtr, imageBufferPtr + width * height * 3);
+            let imgInfo = this._getImageInfo(imgDataPtr);
 
-        let dataUrl = this._getImage(width, height, imageBuffer);
+            let dataUrl = this._getImageDataUrl(imgInfo.width, imgInfo.height, imgInfo.imageBuffer);
 
-        Module._free(imgDataPtr);
-        Module._free(imageBufferPtr);
+            callback(dataUrl, imgInfo);
+        } else {
+            Module._free(this.cacheFilePtr);
 
-        return {
-            dataUrl,
-            width,
-            height,
-            duration
-        };
+            this.cacheFile = file;
+
+            this.setFile(file, filePtr => {
+                this.cacheFilePtr = filePtr;
+
+                let imgDataPtr = Module._capture(timeStamp);
+
+                let imgInfo = this._getImageInfo(imgDataPtr);
+
+                let dataUrl = this._getImageDataUrl(imgInfo.width, imgInfo.height, imgInfo.imageBuffer);
+
+                callback(dataUrl, imgInfo);
+            });
+        }
     }
 }
 
