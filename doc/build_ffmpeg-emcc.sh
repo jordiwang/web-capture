@@ -40,10 +40,13 @@ emconfigure ./configure \
     --disable-everything \
     --enable-demuxer=mov \
     --enable-demuxer=matroska \
+    --enable-demuxer=flv \
+    --enable-demuxer=avi \
     --enable-decoder=h264 \
     --enable-decoder=hevc \
     --enable-decoder=mpeg4 \
     --enable-decoder=vp8 \
+    --enable-decoder=vp9 \
     --disable-asm \
     --disable-debug \
 
