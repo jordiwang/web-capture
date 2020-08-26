@@ -107,20 +107,29 @@ int readPacket(void *opaque, uint8_t *buf, int buf_size) {
 }
 
 AVFormatContext *pFormatCtx = NULL;
+AVIOContext *avioCtx = NULL;
+uint8_t *avioCtxBuffer = NULL;
 
 int setFile(uint8_t *buff, int buffLength) {
-    avformat_close_input(&pFormatCtx);
+    if (pFormatCtx != NULL) {
+        fprintf(stderr, "free mem \n");
+        avformat_close_input(&pFormatCtx);
+        avformat_free_context(pFormatCtx);
+        av_free(&avioCtxBuffer);
+        av_free(&avioCtx);
+        av_free(bufferData.ptr);
+    }
 
     bufferData.ptr = buff;
     bufferData.size = buffLength;
 
-    size_t avio_ctx_buffer_size = bufferData.size;
+    size_t avio_ctx_buffer_size = buffLength;
 
     pFormatCtx = avformat_alloc_context();
 
-    uint8_t *avioCtxBuffer = (uint8_t *)av_malloc(avio_ctx_buffer_size);
+    avioCtxBuffer = (uint8_t *)av_malloc(avio_ctx_buffer_size);
 
-    AVIOContext *avioCtx = avio_alloc_context(avioCtxBuffer, avio_ctx_buffer_size, 0, NULL, readPacket, NULL, NULL);
+    avioCtx = avio_alloc_context(avioCtxBuffer, avio_ctx_buffer_size, 0, NULL, readPacket, NULL, NULL);
 
     pFormatCtx->pb = avioCtx;
     pFormatCtx->flags = AVFMT_FLAG_CUSTOM_IO;
@@ -194,6 +203,7 @@ ImageData *capture(int ms) {
     imageData->duration = (uint32_t)pFormatCtx->duration;
     imageData->data = getFrameBuffer(pFrameRGB, pNewCodecCtx);
 
+    avcodec_close(pNewCodecCtx);
     avcodec_close(pCodecCtx);
     av_free(frameBuffer);
 

@@ -16,8 +16,8 @@ emcc ${CLIB_PATH}/capture.c ${FFMPEG_PATH}/lib/libavformat.a ${FFMPEG_PATH}/lib/
     -I "${FFMPEG_PATH}/include" \
     -s WASM=1 \
     -s TOTAL_MEMORY=${TOTAL_MEMORY} \
-    -s EXPORTED_FUNCTIONS='["_main", "_free", "_capture", "_setFile"]' \
-    -s ASSERTIONS=0 \
+    -s EXPORTED_FUNCTIONS='["_main", "_free", "_realloc", "_malloc", "_memset", "_capture", "_setFile"]' \
+    -s ASSERTIONS=1 \
     -s ALLOW_MEMORY_GROWTH=1 \
     -o /data/web-capture/wasm/capture.js
 

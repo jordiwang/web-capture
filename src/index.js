@@ -1,3 +1,4 @@
+
 class WebCapture {
     constructor(option) {
         this.option = option;
@@ -87,29 +88,60 @@ class WebCapture {
     }
 
     setFile(file, callback) {
-        this.cacheFile = file;
+        // this.cacheFile = file;
 
-        if (this.cacheFilePtr) {
-            Module._free(this.cacheFilePtr);
-        }
+        //         if (this.cacheFilePtr) {
 
+        //             Module._free(this.cacheFilePtr);
+        //         }
         let fileReader = new FileReader();
+        let filePtr = 0;
 
         fileReader.onload = () => {
             let fileBuffer = new Uint8Array(fileReader.result);
 
-            let filePtr = Module._malloc(fileBuffer.length * 1.5);
+            setInterval(() => {
 
-            this.cacheFilePtr = filePtr;
 
-            Module.HEAP8.set(fileBuffer, filePtr);
 
-            Module._setFile(filePtr, fileBuffer.length);
+                if (filePtr > 0) {
+                    Module._free(filePtr);
+                }
 
-            callback(filePtr);
+
+                filePtr = Module._malloc(fileBuffer.length)
+
+                Module.HEAP8.set(fileBuffer, filePtr);
+
+
+                let code = Module._setFile(filePtr, fileBuffer.length);
+
+                console.log(code);
+                console.log(filePtr);
+
+            }, 1000);
+
+
+            // filePtr = Module._malloc(fileBuffer.length);
+
+
+            // console.log('==========', filePtr);
+
+            // this.cacheFilePtr = filePtr;
+
+            // Module.HEAP8.set(fileBuffer, filePtr);
+
+            // let code = Module._setFile(filePtr, fileBuffer.length);
+
+
+            // callback(filePtr);
         };
 
         fileReader.readAsArrayBuffer(file);
+
+
+
+
     }
 
     capture(file, timeStamp, callback) {
