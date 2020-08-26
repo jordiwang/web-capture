@@ -111,13 +111,12 @@ AVIOContext *avioCtx = NULL;
 uint8_t *avioCtxBuffer = NULL;
 
 int setFile(uint8_t *buff, int buffLength) {
-    if (pFormatCtx != NULL) {
+    if (avioCtxBuffer != NULL) {
         fprintf(stderr, "free mem \n");
-        avformat_close_input(&pFormatCtx);
+        // avformat_close_input(&pFormatCtx);
         avformat_free_context(pFormatCtx);
-        av_free(&avioCtxBuffer);
-        av_free(&avioCtx);
-        av_free(bufferData.ptr);
+        av_free(avioCtxBuffer);
+        av_free(avioCtx);
     }
 
     bufferData.ptr = buff;
@@ -128,7 +127,7 @@ int setFile(uint8_t *buff, int buffLength) {
     pFormatCtx = avformat_alloc_context();
 
     avioCtxBuffer = (uint8_t *)av_malloc(avio_ctx_buffer_size);
-
+    
     avioCtx = avio_alloc_context(avioCtxBuffer, avio_ctx_buffer_size, 0, NULL, readPacket, NULL, NULL);
 
     pFormatCtx->pb = avioCtx;
