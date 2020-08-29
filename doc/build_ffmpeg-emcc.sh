@@ -8,7 +8,7 @@ rm -rf ffmpeg-emcc
 
 mkdir ffmpeg-emcc
 
-cd /data/ffmpeg-3.3.9
+cd /data/ffmpeg-3.4.8
 
 make clean
 
