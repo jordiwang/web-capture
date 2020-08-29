@@ -1,0 +1,14 @@
+prefix=/data/web-capture/lib/ffmpeg-emcc
+exec_prefix=${prefix}
+libdir=/data/web-capture/lib/ffmpeg-emcc/lib
+includedir=/data/web-capture/lib/ffmpeg-emcc/include
+
+Name: libavformat
+Description: FFmpeg container format library
+Version: 57.83.100
+Requires: libavcodec >= 57.107.100, libavutil >= 55.78.100
+Requires.private: 
+Conflicts:
+Libs: -L${libdir}  -lavformat -s USE_SDL=2 -s USE_SDL=2 -lm
+Libs.private: 
+Cflags: -I${includedir}

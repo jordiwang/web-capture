@@ -1,0 +1,14 @@
+prefix=/data/web-capture/lib/ffmpeg-emcc
+exec_prefix=${prefix}
+libdir=/data/web-capture/lib/ffmpeg-emcc/lib
+includedir=/data/web-capture/lib/ffmpeg-emcc/include
+
+Name: libavutil
+Description: FFmpeg utility library
+Version: 55.78.100
+Requires: 
+Requires.private: 
+Conflicts:
+Libs: -L${libdir}  -lavutil -lm
+Libs.private: 
+Cflags: -I${includedir}

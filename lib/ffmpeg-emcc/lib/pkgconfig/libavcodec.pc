@@ -1,0 +1,14 @@
+prefix=/data/web-capture/lib/ffmpeg-emcc
+exec_prefix=${prefix}
+libdir=/data/web-capture/lib/ffmpeg-emcc/lib
+includedir=/data/web-capture/lib/ffmpeg-emcc/include
+
+Name: libavcodec
+Description: FFmpeg codec library
+Version: 57.107.100
+Requires: libavutil >= 55.78.100
+Requires.private: 
+Conflicts:
+Libs: -L${libdir}  -lavcodec -s USE_SDL=2 -s USE_SDL=2 -lm
+Libs.private: 
+Cflags: -I${includedir}
