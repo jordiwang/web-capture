@@ -1,6 +1,9 @@
 web-capture
 
-基于 ffmpeg-3.3.9
+基于 
+
+* ffmpeg-3.4.8
+* emscripten-2.0
 
 ### 支持编码
 
