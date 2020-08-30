@@ -38,6 +38,7 @@ emconfigure ./configure \
     --disable-os2threads \
     --disable-network \
     --disable-everything \
+    --enable-protocol=file \
     --enable-demuxer=mov \
     --enable-demuxer=matroska \
     --enable-demuxer=flv \
