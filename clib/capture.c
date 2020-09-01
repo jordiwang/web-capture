@@ -30,6 +30,7 @@ AVFrame *initAVFrame(AVCodecContext *pCodecCtx, uint8_t **frameBuffer) {
 
     int numBytes;
     numBytes = av_image_get_buffer_size(AV_PIX_FMT_RGB24, pCodecCtx->width, pCodecCtx->height, 1);
+
     *frameBuffer = (uint8_t *)av_malloc(numBytes * sizeof(uint8_t));
 
     av_image_fill_arrays(pFrameRGB->data, pFrameRGB->linesize, *frameBuffer, AV_PIX_FMT_RGB24, pCodecCtx->width, pCodecCtx->height, 1);
@@ -67,14 +68,18 @@ AVFrame *readAVFrame(AVCodecContext *pCodecCtx, AVFormatContext *pFormatCtx, AVF
             if (avcodec_receive_frame(pCodecCtx, pFrame) == 0) {
                 sws_scale(sws_ctx, (uint8_t const *const *)pFrame->data, pFrame->linesize, 0, pCodecCtx->height, pFrameRGB->data, pFrameRGB->linesize);
 
+                sws_freeContext(sws_ctx);
+                av_frame_free(&pFrame);
                 av_packet_unref(&packet);
 
                 return pFrameRGB;
             }
         }
-
-        av_packet_unref(&packet);
     }
+
+    sws_freeContext(sws_ctx);
+    av_frame_free(&pFrame);
+    av_packet_unref(&packet);
 
     return NULL;
 }
@@ -200,7 +205,9 @@ ImageData *capture(int ms) {
     imageData->data = getFrameBuffer(pFrameRGB, pNewCodecCtx);
 
     avcodec_close(pNewCodecCtx);
+    av_free(pCodec);
     avcodec_close(pCodecCtx);
+    av_frame_free(&pFrameRGB);    
     av_free(frameBuffer);
 
     return imageData;
