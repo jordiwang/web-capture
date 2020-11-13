@@ -19,6 +19,7 @@ emcc ${CLIB_PATH}/capture.c ${FFMPEG_PATH}/lib/libavformat.a ${FFMPEG_PATH}/lib/
     -s EXPORTED_FUNCTIONS='["_main", "_free", "_capture", "_setFile"]' \
     -s ASSERTIONS=0 \
     -s ALLOW_MEMORY_GROWTH=1 \
+    -s MAXIMUM_MEMORY=4GB \
     -o /data/web-capture/wasm/capture.js
 
 echo "Finished Build"
