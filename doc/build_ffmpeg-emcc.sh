@@ -1,19 +1,23 @@
-echo "start build ffmpeg-emcc"
+echo "===== start build ffmpeg-emcc ====="
 
-source /data/emsdk/emsdk_env.sh
+NOW_PATH=$(cd $(dirname $0); pwd)
 
-cd /data/web-capture/lib/
+WEB_CAPTURE_PATH=$(cd $NOW_PATH/../; pwd)
 
-rm -rf ffmpeg-emcc
+FFMPEG_PATH=$(cd $WEB_CAPTURE_PATH/../ffmpeg-3.4.8; pwd)
 
-mkdir ffmpeg-emcc
+source $WEB_CAPTURE_PATH/../emsdk/emsdk_env.sh
 
-cd /data/ffmpeg-3.4.8
+rm -rf  $WEB_CAPTURE_PATH/lib/ffmpeg-emcc
+
+mkdir $WEB_CAPTURE_PATH/lib/ffmpeg-emcc
+
+cd $FFMPEG_PATH
 
 make clean
 
 emconfigure ./configure \
-    --prefix=/data/web-capture/lib/ffmpeg-emcc \
+    --prefix=$WEB_CAPTURE_PATH/lib/ffmpeg-emcc \
     --cc="emcc" \
     --cxx="em++" \
     --ar="emar" \
@@ -48,9 +52,12 @@ emconfigure ./configure \
     --enable-decoder=mpeg4 \
     --enable-decoder=vp8 \
     --enable-decoder=vp9 \
+    --enable-decoder=wmv3 \
     --disable-asm \
     --disable-debug \
 
 make
 
 make install
+
+echo "===== build ffmpeg-emcc finished  ====="

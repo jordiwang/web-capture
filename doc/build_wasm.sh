@@ -1,25 +1,30 @@
-source /data/emsdk/emsdk_env.sh
+echo "===== start build wasm ====="
 
-cd ../wasm
+NOW_PATH=$(cd $(dirname $0); pwd)
 
-rm -rf capture.wasm capture.js
+WEB_CAPTURE_PATH=$(cd $NOW_PATH/../; pwd)
 
-export TOTAL_MEMORY=33554432
+FFMPEG_PATH=$(cd $WEB_CAPTURE_PATH/lib/ffmpeg-emcc; pwd)
 
-export FFMPEG_PATH=/data/web-capture/lib/ffmpeg-emcc
+CLIB_PATH=$(cd $WEB_CAPTURE_PATH/clib/; pwd)
 
-export CLIB_PATH=/data/web-capture/clib
+TOTAL_MEMORY=33554432
 
-echo "Running Emscripten..."
-emcc ${CLIB_PATH}/capture.c ${FFMPEG_PATH}/lib/libavformat.a ${FFMPEG_PATH}/lib/libavcodec.a ${FFMPEG_PATH}/lib/libswscale.a ${FFMPEG_PATH}/lib/libavutil.a \
+source $WEB_CAPTURE_PATH/../emsdk/emsdk_env.sh
+
+rm -rf $WEB_CAPTURE_PATH/wasm
+
+mkdir $WEB_CAPTURE_PATH/wasm
+
+emcc $CLIB_PATH/capture.c $FFMPEG_PATH/lib/libavformat.a $FFMPEG_PATH/lib/libavcodec.a $FFMPEG_PATH/lib/libswscale.a $FFMPEG_PATH/lib/libavutil.a \
     -O3 \
-    -I "${FFMPEG_PATH}/include" \
+    -I "$FFMPEG_PATH/include" \
     -s WASM=1 \
-    -s TOTAL_MEMORY=${TOTAL_MEMORY} \
+    -s TOTAL_MEMORY=$TOTAL_MEMORY \
     -s EXPORTED_FUNCTIONS='["_main", "_free", "_capture", "_setFile"]' \
     -s ASSERTIONS=0 \
     -s ALLOW_MEMORY_GROWTH=1 \
     -s MAXIMUM_MEMORY=4GB \
-    -o /data/web-capture/wasm/capture.js
+    -o $WEB_CAPTURE_PATH/wasm/capture.js
 
-echo "Finished Build"
+echo "===== build wasm finished  ====="

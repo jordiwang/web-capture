@@ -1,12 +1,20 @@
-echo "start build ffmpeg"
+echo "===== start build ffmpeg ====="
 
-cd /data/ffmpeg-3.4.8
+NOW_PATH=$(cd $(dirname $0); pwd)
 
-rm -rf /data/web-capture/lib/ffmpeg-3.4.8
+WEB_CAPTURE_PATH=$(cd $NOW_PATH/../; pwd)
+
+FFMPEG_PATH=$(cd $WEB_CAPTURE_PATH/../ffmpeg-3.4.8; pwd)
+
+rm -rf $WEB_CAPTURE_PATH/lib/ffmpeg-3.4.8
+
+cd $FFMPEG_PATH
 
 ./configure \
-    --prefix=/data/web-capture/lib/ffmpeg-3.4.8
+    --prefix=$WEB_CAPTURE_PATH/lib/ffmpeg-3.4.8
 
 make
 
 make install
+
+echo "===== build ffmpeg finished  ====="
