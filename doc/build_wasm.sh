@@ -22,7 +22,7 @@ emcc $CLIB_PATH/capture.c $FFMPEG_PATH/lib/libavformat.a $FFMPEG_PATH/lib/libavc
     -s WASM=1 \
     -lworkerfs.js \
     -s TOTAL_MEMORY=$TOTAL_MEMORY \
-    -s EXPORTED_RUNTIME_METHODS='["ccall","cwrap"]' \
+    -s EXPORTED_RUNTIME_METHODS='["ccall", "cwrap"]' \
     -s EXPORTED_FUNCTIONS='["_main", "_free", "_capture"]' \
     -s ASSERTIONS=0 \
     -s ALLOW_MEMORY_GROWTH=1 \
