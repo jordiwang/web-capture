@@ -1,23 +1,30 @@
 {
   "name": "web-capture",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "wasm 截取视频帧",
-  "main": ".prettierrc.js",
+  "main": ".babelrc.js",
   "scripts": {
     "dev": "webpack --config webpack.config.js --development",
-    "build": "webpack --config webpack.config.js --production"
+    "build": "npm run prettier && npm run eslint && webpack --config webpack.config.js --production",
+    "prettier": "prettier --write ./src/",
+    "eslint": "eslint --fix ./src/"
   },
-  "author": "",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jordiwang/web-capture.git"
+  },
+  "author": "jordiwang",
   "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jordiwang/web-capture/issues"
+  },
+  "homepage": "https://github.com/jordiwang/web-capture#readme",
   "devDependencies": {
-    "@babel/core": "7.10.5",
-    "@babel/preset-env": "7.10.4",
-    "babel-loader": "8.1.0",
-    "eslint": "7.5.0",
-    "eslint-loader": "4.0.2",
-    "friendly-errors-webpack-plugin": "1.7.0",
-    "prettier": "2.0.5",
-    "prettier-webpack-plugin": "1.2.0",
+    "@babel/core": "^7.14.2",
+    "@babel/preset-env": "^7.14.2",
+    "babel-loader": "^8.2.2",
+    "eslint": "^7.26.0",
+    "prettier": "^2.3.0",
     "webpack": "4.44.0",
     "webpack-cli": "3.3.12"
   }

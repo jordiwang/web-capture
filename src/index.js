@@ -1,49 +1,39 @@
 class WebCapture {
-    constructor(option) {
-        this.option = option;
+    constructor(){
+        this.captureWorker = new Worker('/src/capture.js')
 
-        this.cacheFile = null;
-        this.cacheFilePtr = 0;
 
-        window.Module = {
-            instantiateWasm: (info, receiveInstance) => {
-                fetch('./wasm/capture.wasm')
-                    .then(response => {
-                        return response.arrayBuffer();
-                    })
-                    .then(bytes => {
-                        return WebAssembly.instantiate(bytes, info);
-                    })
-                    .then(result => {
-                        receiveInstance(result.instance);
-                    });
-            },
-            onRuntimeInitialized: () => {
-                if (this.option.onInit) {
-                    this.option.onInit();
-                }
+        this.captureWorker.addEventListener('message',evt=>{
+            console.log('==========');
+            console.log(evt);
+
+            const evtData = evt.data
+            if (evtData.type == 'capture') {
+                console.log(evtData.data);
+
+
+                this.callback(this._getImageDataUrl(evtData.data),evtData.data)
             }
-        };
-
-        this._loadLib();
+        })
     }
 
-    _loadLib() {
-        let node = document.createElement('script');
+    capture(file,timeStamp,callback){
 
-        node.onload = () => {
-            document.body.removeChild(node);
-            node = null;
-        };
+        const evt = {
+            type:'capture',
+            data:{
+                file,
+                timeStamp
+            }
+        }
 
-        node.async = true;
-        node.src = './wasm/capture.js';
-        node.crossOrigin = 'true';
-
-        document.body.appendChild(node);
+        this.captureWorker.postMessage(evt)
+        this.callback = callback
     }
 
-    _getImageDataUrl(width, height, imageBuffer) {
+
+    _getImageDataUrl(data) {
+        const {width, height, imageBuffer} = data
         let canvas = document.createElement('canvas');
         let ctx = canvas.getContext('2d');
 
@@ -67,74 +57,4 @@ class WebCapture {
 
         return canvas.toDataURL('image/jpeg');
     }
-
-    _getImageInfo(imgDataPtr) {
-        let width = Module.HEAPU32[imgDataPtr / 4],
-            height = Module.HEAPU32[imgDataPtr / 4 + 1],
-            duration = Module.HEAPU32[imgDataPtr / 4 + 2],
-            imageBufferPtr = Module.HEAPU32[imgDataPtr / 4 + 3],
-            imageBuffer = Module.HEAPU8.subarray(imageBufferPtr, imageBufferPtr + width * height * 3);
-
-        Module._free(imgDataPtr);
-        Module._free(imageBufferPtr);
-
-        return {
-            width,
-            height,
-            duration,
-            imageBuffer
-        };
-    }
-
-    setFile(file, callback) {
-        this.cacheFile = file;
-
-        if (this.cacheFilePtr) {
-            Module._free(this.cacheFilePtr);
-        }
-
-        let fileReader = new FileReader();
-
-        fileReader.onload = () => {
-            let fileBuffer = new Uint8Array(fileReader.result);
-
-            let filePtr = Module._malloc(fileBuffer.length);
-
-            this.cacheFilePtr = filePtr;
-
-            Module.HEAP8.set(fileBuffer, filePtr);
-
-            Module._setFile(filePtr, fileBuffer.length);
-
-            callback(filePtr);
-        };
-
-        fileReader.readAsArrayBuffer(file);
-    }
-
-    capture(file, timeStamp, callback) {
-        if (file === this.cacheFile) {
-            let imgDataPtr = Module._capture(timeStamp);
-
-            let imgInfo = this._getImageInfo(imgDataPtr);
-
-            let dataUrl = this._getImageDataUrl(imgInfo.width, imgInfo.height, imgInfo.imageBuffer);
-
-            callback(dataUrl, imgInfo);
-        } else {
-            this.setFile(file, () => {
-                let imgDataPtr = Module._capture(timeStamp);
-
-                let imgInfo = this._getImageInfo(imgDataPtr);
-
-                let dataUrl = this._getImageDataUrl(imgInfo.width, imgInfo.height, imgInfo.imageBuffer);
-
-                callback(dataUrl, imgInfo);
-            });
-        }
-    }
 }
-
-window.WebCapture = WebCapture;
-
-export default WebCapture;
