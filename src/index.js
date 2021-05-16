@@ -1,60 +1,36 @@
-class WebCapture {
-    constructor(){
-        this.captureWorker = new Worker('/src/capture.js')
+import WebCapture from './web-capture';
 
+const webCapture = new WebCapture();
 
-        this.captureWorker.addEventListener('message',evt=>{
-            console.log('==========');
-            console.log(evt);
+let isInit = false;
 
-            const evtData = evt.data
-            if (evtData.type == 'capture') {
-                console.log(evtData.data);
+self.onmessage = function (evt) {
+    const evtData = evt.data;
 
-
-                this.callback(this._getImageDataUrl(evtData.data),evtData.data)
-            }
-        })
+    if (isInit && webCapture[evtData.type]) {
+        webCapture[evtData.type](evtData.data);
     }
+};
 
-    capture(file,timeStamp,callback){
+self.Module = {
+    instantiateWasm: (info, receiveInstance) => {
+        fetch('/dist/web-capture.wasm')
+            .then(response => {
+                return response.arrayBuffer();
+            })
+            .then(bytes => {
+                return WebAssembly.instantiate(bytes, info);
+            })
+            .then(result => {
+                receiveInstance(result.instance);
+            });
+    },
+    onRuntimeInitialized: () => {
+        isInit = true;
 
-        const evt = {
-            type:'capture',
-            data:{
-                file,
-                timeStamp
-            }
-        }
-
-        this.captureWorker.postMessage(evt)
-        this.callback = callback
+        self.postMessage({
+            type: 'init',
+            data: {}
+        });
     }
-
-
-    _getImageDataUrl(data) {
-        const {width, height, imageBuffer} = data
-        let canvas = document.createElement('canvas');
-        let ctx = canvas.getContext('2d');
-
-        canvas.width = width;
-        canvas.height = height;
-
-        let imageData = ctx.createImageData(width, height);
-
-        let j = 0;
-        for (let i = 0; i < imageBuffer.length; i++) {
-            if (i && i % 3 == 0) {
-                imageData.data[j] = 255;
-                j += 1;
-            }
-
-            imageData.data[j] = imageBuffer[i];
-            j += 1;
-        }
-
-        ctx.putImageData(imageData, 0, 0, 0, 0, width, height);
-
-        return canvas.toDataURL('image/jpeg');
-    }
-}
+};

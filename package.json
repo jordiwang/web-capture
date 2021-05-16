@@ -5,8 +5,8 @@
   "main": ".babelrc.js",
   "scripts": {
     "dev": "webpack --config webpack.config.js --development",
-    "build": "npm run prettier && npm run eslint && webpack --config webpack.config.js --production",
-    "prettier": "prettier --write ./src/",
+    "build": "npm run prettier && npm run eslint && webpack --config ./script/webpack.config.js --production",
+    "prettier": "prettier --write ./src/**.js",
     "eslint": "eslint --fix ./src/"
   },
   "repository": {

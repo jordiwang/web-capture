@@ -7,10 +7,10 @@ let isDevelopment = mode == 'development'
 module.exports = {
     mode,
     watch: isDevelopment ? true : false,
-    entry: path.join(__dirname, './src/index.js'),
+    entry: path.join(__dirname, '../src/index.js'),
     output: {
-        filename: 'web-capture.js',
-        path: path.resolve(__dirname, './dist')
+        filename: 'capture.js',
+        path: path.resolve(__dirname, '../tmp')
     },
     module: {
         rules: [
