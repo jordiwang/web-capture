@@ -1,3 +1,5 @@
+#!/bin/sh
+
 echo "===== start build ffmpeg-emcc ====="
 
 NOW_PATH=$(cd $(dirname $0); pwd)

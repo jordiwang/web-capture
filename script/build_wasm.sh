@@ -1,3 +1,5 @@
+#!/bin/sh
+
 echo "===== start build wasm ====="
 
 NOW_PATH=$(cd $(dirname $0); pwd)

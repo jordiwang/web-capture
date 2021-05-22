@@ -4,10 +4,10 @@
   "description": "wasm 截取视频帧",
   "main": ".babelrc.js",
   "scripts": {
-    "dev": "webpack --config webpack.config.js --development",
-    "build": "npm run prettier && npm run eslint && webpack --config ./script/webpack.config.js --production",
+    "webpack": "webpack --config ./script/webpack.config.js",
     "prettier": "prettier --write ./src/**.js",
-    "eslint": "eslint --fix ./src/"
+    "eslint": "eslint --fix ./src/",
+    "build": "sh ./script/build.sh"
   },
   "repository": {
     "type": "git",
@@ -25,7 +25,7 @@
     "babel-loader": "^8.2.2",
     "eslint": "^7.26.0",
     "prettier": "^2.3.0",
-    "webpack": "4.44.0",
-    "webpack-cli": "3.3.12"
+    "webpack": "^4.44.0",
+    "webpack-cli": "^3.3.12"
   }
 }

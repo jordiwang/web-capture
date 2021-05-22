@@ -1,12 +1,9 @@
 const path = require('path');
 
-let mode = process.argv[4].slice(2)
 
-let isDevelopment = mode == 'development'
 
 module.exports = {
-    mode,
-    watch: isDevelopment ? true : false,
+    mode: 'production',
     entry: path.join(__dirname, '../src/index.js'),
     output: {
         filename: 'capture.js',
