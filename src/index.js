@@ -14,7 +14,7 @@ self.onmessage = function (evt) {
 
 self.Module = {
     instantiateWasm: (info, receiveInstance) => {
-        fetch('/dist/web-capture.wasm')
+        fetch(WASM_PATH)
             .then(response => {
                 return response.arrayBuffer();
             })

@@ -1,16 +1,35 @@
-# NOW_PATH=$(cd $(dirname $0); pwd)
+#!/bin/bash
 
-# WEB_CAPTURE_PATH=$(cd $NOW_PATH/../; pwd)
+echo "===== start build ====="
 
-# cd $WEB_CAPTURE_PATH
+NOW_PATH=$(cd $(dirname $0); pwd)
 
-# npm run tmp-build
+WEB_CAPTURE_PATH=$(cd $NOW_PATH/../; pwd)
 
-# $WEB_CAPTURE_PATH/script/build_wasm.sh
+cd $WEB_CAPTURE_PATH
 
-# rm -rf ./tmp
+rm -rf ./dist/
+rm -rf ./tmp/
 
-#!/bin/sh
+if [ ! "$1" ]
+then
+    WASM_PATH="/dist/web-capture.wasm"
+else
+    WASM_PATH=$1
+fi
 
-echo "-----"
-echo "$1"
+echo "===== start build js ====="
+
+echo "wasm path is: $WASM_PATH"
+
+export WASM_PATH
+
+npm run webpack
+
+echo "===== finish build js ====="
+
+$WEB_CAPTURE_PATH/script/build_wasm.sh
+
+rm -rf ./tmp/
+
+echo "===== finish build ====="

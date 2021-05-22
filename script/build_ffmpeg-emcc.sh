@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 echo "===== start build ffmpeg-emcc ====="
 
@@ -62,4 +62,4 @@ make
 
 make install
 
-echo "===== build ffmpeg-emcc finished  ====="
+echo "===== finish build ffmpeg-emcc ====="

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 echo "===== start build wasm ====="
 
@@ -29,4 +29,4 @@ emcc $WEB_CAPTURE_PATH/src/capture.c $FFMPEG_PATH/lib/libavformat.a $FFMPEG_PATH
     -s ALLOW_MEMORY_GROWTH=1 \
     -o $WEB_CAPTURE_PATH/dist/web-capture.js
 
-echo "===== build wasm finished  ====="
+echo "===== finish build wasm ====="

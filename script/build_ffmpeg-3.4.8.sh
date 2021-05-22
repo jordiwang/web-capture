@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 echo "===== start build ffmpeg ====="
 
@@ -19,4 +19,4 @@ make
 
 make install
 
-echo "===== build ffmpeg finished  ====="
+echo "===== finish build ffmpeg ====="
