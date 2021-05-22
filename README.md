@@ -24,6 +24,8 @@
 
 ## 注意事项
 
+* 建议基于 `Ubuntu` 系统进行编译安装，已知 `Windows`、`Mac`都会出现各种文件丢失和环境不一致导致的问题
+
 * 编译前需要下载 [ffmpeg-3.4.8.tar.xz](http://ffmpeg.org/releases/ffmpeg-3.4.8.tar.xz) 并解压至与 `web-capture` 同级的目录
 
 * `emsdk` 安装目录需要与 `web-capture` 同级
