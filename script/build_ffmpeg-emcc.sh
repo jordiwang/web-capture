@@ -1,3 +1,5 @@
+#!/bin/bash
+
 echo "===== start build ffmpeg-emcc ====="
 
 NOW_PATH=$(cd $(dirname $0); pwd)
@@ -60,4 +62,4 @@ make
 
 make install
 
-echo "===== build ffmpeg-emcc finished  ====="
+echo "===== finish build ffmpeg-emcc ====="

@@ -1,3 +1,5 @@
+#!/bin/bash
+
 echo "===== start build ffmpeg ====="
 
 NOW_PATH=$(cd $(dirname $0); pwd)
@@ -17,4 +19,4 @@ make
 
 make install
 
-echo "===== build ffmpeg finished  ====="
+echo "===== finish build ffmpeg ====="

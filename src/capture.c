@@ -4,18 +4,12 @@
 #include <libswscale/swscale.h>
 
 typedef struct {
-    uint8_t *ptr;
-    size_t size;
-} BufferData;
-
-typedef struct {
     uint32_t width;
     uint32_t height;
     uint32_t duration;
     uint8_t *data;
 } ImageData;
 
-BufferData bufferData;
 
 int main(int argc, char const *argv[]) {
     av_register_all();
@@ -96,55 +90,16 @@ uint8_t *getFrameBuffer(AVFrame *pFrame, AVCodecContext *pCodecCtx) {
     return buffer;
 }
 
-int readPacket(void *opaque, uint8_t *buf, int buf_size) {
-    buf_size = FFMIN(buf_size, bufferData.size);
-
-    if (!buf_size) {
-        return AVERROR_EOF;
-    }
-
-    memcpy(buf, bufferData.ptr, buf_size);
-
-    bufferData.ptr += buf_size;
-    bufferData.size -= buf_size;
-
-    return buf_size;
-}
-
-AVFormatContext *pFormatCtx = NULL;
-AVIOContext *avioCtx = NULL;
-
-int setFile(uint8_t *buff, int buffLength) {
-    if (pFormatCtx != NULL) {
-        avformat_close_input(&pFormatCtx);
-        av_free(avioCtx->buffer);
-        av_free(avioCtx);
-    }
-
-    bufferData.ptr = buff;
-    bufferData.size = buffLength;
-
-    size_t avioCtxBufferSize = buffLength;
-
-    pFormatCtx = avformat_alloc_context();
-
-    uint8_t *avioCtxBuffer = (uint8_t *)av_malloc(avioCtxBufferSize);
-
-    avioCtx = avio_alloc_context(avioCtxBuffer, avioCtxBufferSize, 0, NULL, readPacket, NULL, NULL);
-
-    pFormatCtx->pb = avioCtx;
-    pFormatCtx->flags = AVFMT_FLAG_CUSTOM_IO;
-
-    if (avformat_open_input(&pFormatCtx, "", NULL, NULL) < 0) {
-        fprintf(stderr, "avformat_open_input failed\n");
-        return -1;
-    }
-
-    return 0;
-}
-
-ImageData *capture(int ms) {
+// 截取指定位置视频画面
+ImageData *capture(int ms, char *path) {
     ImageData *imageData = NULL;
+
+    AVFormatContext *pFormatCtx = avformat_alloc_context();  
+
+    if (avformat_open_input(&pFormatCtx, path, NULL, NULL) < 0) {
+        fprintf(stderr, "avformat_open_input failed\n");
+        return NULL;
+    }
 
     if (avformat_find_stream_info(pFormatCtx, NULL) < 0) {
         fprintf(stderr, "avformat_find_stream_info failed\n");
@@ -209,6 +164,7 @@ ImageData *capture(int ms) {
     avcodec_close(pCodecCtx);
     av_frame_free(&pFrameRGB);    
     av_free(frameBuffer);
+    avformat_close_input(&pFormatCtx);
 
     return imageData;
 }

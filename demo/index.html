@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+
+    <input id="js_file" type="file">
+
+    <input id="js_time" type="number" value="1" placeholder="画面时间s">
+
+    <button id="js_button">提取</button>
+
+
+    <div id="js_info"></div>
+
+    <div id="js_result"></div>
+
+    <script>
+        const captureWorker = new Worker('/dist/web-capture.js');
+
+        let startTime = 0;
+
+        let button = document.querySelector('#js_button');
+        let resultContainer = document.querySelector('#js_result');
+        let fileInput = document.querySelector('#js_file');
+        let timeInput = document.querySelector('#js_time');
+        let infoContainer = document.querySelector('#js_info');
+
+        captureWorker.onmessage = function (evt) {
+            console.log('========');
+            console.log(evt.data);
+
+            if (evt.data.type == 'capture') {
+                const { imageDataBuffer, width, height, duration } = evt.data.data;
+
+                let canvas = document.createElement('canvas');
+                let ctx = canvas.getContext('2d');
+
+                canvas.width = width;
+                canvas.height = height;
+
+                const imageData = new ImageData(imageDataBuffer, width, height);
+                ctx.putImageData(imageData, 0, 0, 0, 0, width, height);
+
+                if (resultContainer.childNodes.length > 0) {
+                    resultContainer.removeChild(resultContainer.childNodes[0]);
+                }
+
+                resultContainer.appendChild(canvas);
+
+                infoContainer.innerHTML = `耗时：${Date.now() - startTime}ms<br>宽度：${width}<br>高度：${height}<br>时长：${duration / 1000000}s`;
+            }
+        };
+
+        button.addEventListener('click', () => {
+            let file = fileInput.files[0];
+
+            startTime = Date.now();
+
+            const evt = {
+                type: 'capture',
+                data: {
+                    file,
+                    timeStamp: timeInput.value * 1000
+                }
+            };
+
+            captureWorker.postMessage(evt);
+        });
+
+  
+  
+  </script>
+</body>
+
+</html>
