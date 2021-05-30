@@ -44,61 +44,28 @@ http://localhost:3000/demo/index.html
 
 ## 使用
 
-因为使用 webassembly 的限制，必须在 `web woker` 中才能对文件对象进行直接读取，否则必须讲文件对象拷贝在内存中。故需要使用 `web worker` 的方式进行调用， 示例如下
+可以参考 `demo/index.html`, 示例如下
 
 ```js
 
-const captureWorker = new Worker('/dist/web-capture.js');
+ window.webCapture.capture(file, timeInput.value * 1000, (dataURL, imageInfo) => {
 
-captureWorker.onmessage = function (evt) {
-    console.log('========');
-    console.log(evt.data);
+    const { width, height, duration } = imageInfo;
 
-    // capture 截取后结果
-    if (evt.data.type == 'capture') {
-        // imageDataBuffer: Uint8ClampedArray 图像像素数据
-        // width: 宽度
-        // height: 高度
-        // duraion: 视频时长 ms
-        const { imageDataBuffer, width, height, duration } = evt.data.data;
+    resultContainer.innerHTML = `<img src="${dataURL}" />`
 
-        let canvas = document.createElement('canvas');
-        let ctx = canvas.getContext('2d');
-
-        canvas.width = width;
-        canvas.height = height;
-
-        const imageData = new ImageData(imageDataBuffer, width, height);
-        ctx.putImageData(imageData, 0, 0, 0, 0, width, height);
-
-        resultContainer.appendChild(canvas);
-    }
-};
-
-// 获取文件后使用 postMessage 调用 capture 截取视频帧
-captureWorker.postMessage({
-    type: 'capture',
-    data: {
-        file,
-        timeStamp: 1000      // ms
-    }
-});
+    infoContainer.innerHTML = `耗时：${Date.now() - startTime}ms<br>宽度：${width}<br>高度：${height}<br>时长：${duration / 1000000}s`;
+})
 
 ```
 
 ## 本地编译
 
 ```
-npm run build [wasm path]
+npm run build
 ```
 
-通过 npm run build 编译项目，[wasm path] 为自定义的 wasm 加载路径，最终产物在 dist 目录下
-
-例: 项目计划 wasm 文件存放的 cdn 路径为 `https://cdn.demo.com/wasm/web-capture.wasm`, 则编译命令如下 
-
-```
-npm run build https://cdn.demo.com/wasm/web-capture.wasm
-```
+通过 npm run build 编译项目，最终产物在 dist 目录下
 
 ## 参考文章
 
