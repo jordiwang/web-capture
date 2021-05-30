@@ -11,24 +11,19 @@ cd $WEB_CAPTURE_PATH
 rm -rf ./dist/
 rm -rf ./tmp/
 
-if [ ! "$1" ]
-then
-    WASM_PATH="/dist/web-capture.wasm"
-else
-    WASM_PATH=$1
-fi
-
 echo "===== start build js ====="
 
 echo "wasm path is: $WASM_PATH"
 
 export WASM_PATH
 
-npm run webpack
+npm run webpack-worker
 
 echo "===== finish build js ====="
 
 $WEB_CAPTURE_PATH/script/build_wasm.sh
+
+npm run webpack-capture
 
 rm -rf ./tmp/
 
