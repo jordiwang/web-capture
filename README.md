@@ -67,6 +67,18 @@ npm run build
 
 通过 npm run build 编译项目，最终产物在 dist 目录下
 
+## 项目赞助
+
+觉得有帮助可以赞助作者更好维护此项目~
+
+* 支付宝
+
+![支付宝](./doc/alipay.png)
+
+* 微信支付
+
+![微信支付](./doc/wepay.png)
+
 ## 参考文章
 
 https://www.jianshu.com/p/d08c0cff8a77
