@@ -23,6 +23,7 @@ emconfigure ./configure \
     --cc="emcc" \
     --cxx="em++" \
     --ar="emar" \
+    --ranlib="emranlib" \
     --cpu=generic \
     --target-os=none \
     --arch=x86_32 \
